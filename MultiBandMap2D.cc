@@ -945,7 +945,7 @@ void FrameAbsOri(double* absR, double* absT, double absScale,
 
 }
 
-void MultiBandMap2DCPU::planeFit()
+void MultiBandMap2DCPU::planeFit(bool bIsFit)
 {
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     int nKeyFrames = vpKFs.size();
@@ -969,22 +969,31 @@ void MultiBandMap2DCPU::planeFit()
         nvalidpt++;
     }
     
-    PointCloudFilter(px, py, pz, nvalidpt, 64, 0.6);
+    int nSmoothPt = PointCloudFilter(px, py, pz, nvalidpt, 64, 0.6);
         
     double mx = 0;
     double my = 0;
     double mz = 0;
-    for (size_t i = 0, iend = nvalidpt; i < iend; i++)
+    for (size_t i = 0, iend = nSmoothPt; i < iend; i++)
     {
         mx += px[i];
         my += py[i];
         mz += pz[i];
     }
-    mx /= double(nvalidpt);
-    my /= double(nvalidpt);
-    mz /= double(nvalidpt);
+    mx /= double(nSmoothPt);
+    my /= double(nSmoothPt);
+    mz /= double(nSmoothPt);
 
-    mPlanePos = pi::SE3d(mx, my, mz, 0, 0, 0, 1);
+    if (bIsFit)
+    {
+        double wx, wy, wz, w;
+        PlaneFit(px, py, pz, nSmoothPt, mx, my, mz, wx, wy, wz, w);
+        mPlanePos = pi::SE3d(mx, my, mz, wx, wy, wz, w);
+    }
+    else
+    {
+        mPlanePos = pi::SE3d(mx, my, mz, 0, 0, 0, 1);
+    }
 
     FILE* fp = fopen("c:\\temp\\slampt.xyz", "w");
     for (int i = 0; i < nKeyFrames; i++)
@@ -996,7 +1005,7 @@ void MultiBandMap2DCPU::planeFit()
         double zs = pos.at<float>(2);       
         fprintf(fp, "%lf %lf %lf %d %d %d \n", xs, ys, zs, 0, 255, 0);     
     }
-    for (size_t i = 0, iend = nvalidpt; i < iend; i++)
+    for (size_t i = 0, iend = nSmoothPt; i < iend; i++)
     {        
         fprintf(fp, "%lf %lf %lf %d %d %d \n", px[i], py[i], pz[i], 255, 0, 0);
     }
@@ -1159,7 +1168,7 @@ void MultiBandMap2DCPU::run()
             camParas.h = mHt;
 
             //1. plane fitting
-            planeFit();
+            planeFit(false);
 
 			//2. transform based on plane fitting
 			printf("generating frames and rendering... \n");
@@ -1558,7 +1567,7 @@ int  MultiBandMap2DCPU::finalMosaic()
     camParas.h = mHt;
 
     //1. plane fitting
-    planeFit();
+    planeFit(true);
 
     //2. transform based on plane fitting
     printf("generating frames and rendering... \n");
