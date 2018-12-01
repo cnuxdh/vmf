@@ -995,6 +995,7 @@ void MultiBandMap2DCPU::planeFit(bool bIsFit)
         mPlanePos = pi::SE3d(mx, my, mz, 0, 0, 0, 1);
     }
 
+    /*
     FILE* fp = fopen("c:\\temp\\slampt.xyz", "w");
     for (int i = 0; i < nKeyFrames; i++)
     {
@@ -1010,6 +1011,7 @@ void MultiBandMap2DCPU::planeFit(bool bIsFit)
         fprintf(fp, "%lf %lf %lf %d %d %d \n", px[i], py[i], pz[i], 255, 0, 0);
     }
     fclose(fp);
+    */
 
     delete[] px;
     delete[] py;
@@ -1153,8 +1155,8 @@ void MultiBandMap2DCPU::run()
 		}
 		
         //************************ I: plane fitting *******************************
-		//if (nKeyFrames == prepareMosaicCount || (nKeyFrames>0 && nKeyFrames % 20 == 0))
-        if (nKeyFrames == prepareMosaicCount)
+		if (nKeyFrames == prepareMosaicCount || (nKeyFrames>0 && nKeyFrames % 20 == 0))
+        //if (nKeyFrames == prepareMosaicCount )
 		{
             sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
 
@@ -1168,7 +1170,14 @@ void MultiBandMap2DCPU::run()
             camParas.h = mHt;
 
             //1. plane fitting
-            planeFit(false);
+            if (nKeyFrames == prepareMosaicCount)
+            {
+                planeFit(false);
+            }
+            else
+            {
+                planeFit(true);
+            }
 
 			//2. transform based on plane fitting
 			printf("generating frames and rendering... \n");
@@ -1243,8 +1252,10 @@ void MultiBandMap2DCPU::run()
             ////////////////// 4. similarity transform /////////////////
             Mat result;
             int xoff, yoff;
-            mosaic(result, xoff, yoff);
-			
+            bool bIsOk = mosaic(result, xoff, yoff);
+            if (!bIsOk)
+                continue;
+
             //draw camera locations
             vector<POINT3D> srcPts;
             vector<POINT3D> dstPts;
@@ -1533,8 +1544,6 @@ void MultiBandMap2DCPU::run()
 					file.release();
 					/*string str = file.releaseAndGetString();*/
 					messageSendClient->SendMessageToServer((char*)vocfile, strlen(vocfile));
-
-
 				}
 				int ht = warp_res.rows;
 				int wd = warp_res.cols;
@@ -1777,7 +1786,7 @@ int  MultiBandMap2DCPU::finalMosaic()
     geoinfo.dx = resolution;
     geoinfo.dy = -resolution;
     geoinfo.projectRef = pszWKT;
-    GdalWriteImageColor("c:\\temp\\final-mosaic.tif", pb, pg, pr,
+    GdalWriteImageColor("c:\\temp\\mosaic.tif", pb, pg, pr,
         rht, rwd, geoinfo);
     delete[] pr;
     delete[] pg;
@@ -1970,6 +1979,10 @@ bool MultiBandMap2DCPU::mosaic(Mat& result, int& xoff, int& yoff){
 
     
 	pi::Point2i wh = maxInt - minInt;
+
+    if (wh.x < 1 || wh.y < 1)
+        return false;
+
 	printf("debugtestwhx:%d why:%d\n", wh.x,wh.y);
 	vector<cv::Mat> pyr_laplace(_bandNum + 1);
 	vector<cv::Mat> pyr_weights(_bandNum + 1);

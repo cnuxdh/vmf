@@ -91,6 +91,8 @@ inline int ShowMat(cv::Mat img, HWND hWndDisplay)
 #define MAX_PATH 256
 
 //loading video file, added by xdh, 2018.7.28
+//
+//C:\Work\Data\turkin-video\20181124\20181124\rgb\clip1.avi
 //C:\Work\Data\turkin-video\rgb-video\sub.mp4  ORBvoc.bin  cfg.yaml 0 0
 //C:\Work\Data\turkin-video\00060\test1.mp4 ORBvoc.bin  cfg.yaml 0 0
 int  main(int argc, char **argv)
@@ -120,7 +122,8 @@ int  main(int argc, char **argv)
 	//input handler
 	int64 wndhandle = atoi(argv[4]);
 	printf("%d \n", wndhandle);
-	ORB_SLAM2::System SLAM(vocfile, settingfile, wndhandle, ORB_SLAM2::System::MONOCULAR, false);
+	ORB_SLAM2::System SLAM(vocfile, settingfile, wndhandle, 
+        ORB_SLAM2::System::MONOCULAR, true);
 
 	//input video file
 	printf("video file: %s \n", argv[1]);
@@ -157,8 +160,8 @@ int  main(int argc, char **argv)
 
         frameIndex++;
 
-        if (frameIndex % 2 == 0)
-            continue;
+        //if (frameIndex % 2 == 0)
+        //    continue;
 
 		tframe += timefortrack;
 		cap >> frame;
@@ -202,7 +205,7 @@ int  main(int argc, char **argv)
 	}
 
     SLAM.FinalMosaic();
-    //SLAM.SaveMapPoints("c:\\temp\\map.txt");
+    SLAM.SaveMapPoints("c:\\temp\\map.txt");
 
 	cap.release();
 

@@ -48,7 +48,7 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
 	F.mFrameImage.copyTo(mFrameImage);
 
 	mGpsInfo = F.mGpsInfo;
-    printf("key frame : %lf %lf \n", mGpsInfo.lat, mGpsInfo.lon);
+    //printf("key frame : %lf %lf \n", mGpsInfo.lat, mGpsInfo.lon);
 
 
     mnId=nNextId++;
@@ -335,7 +335,7 @@ void KeyFrame::UpdateConnections()
     //In case no keyframe counter is over threshold add the one with maximum counter
     int nmax=0;
     KeyFrame* pKFmax=NULL;
-    int th = 15;
+    int th = 8;//15;   //revised by xdh, 2018.11.28
 
     vector<pair<int,KeyFrame*> > vPairs;
     vPairs.reserve(KFcounter.size());

@@ -605,7 +605,7 @@ void Tracking::MonocularInitialization()
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,
             mvbPrevMatched,mvIniMatches,200);
         
-        printf("match number: %d \n", nmatches);
+        //printf("match number: %d \n", nmatches);
 
         // Check if there are enough correspondences
         if(nmatches<100)
